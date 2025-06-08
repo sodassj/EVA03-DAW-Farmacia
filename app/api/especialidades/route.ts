@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 
-export async function GET(request: NextRequest, { params }: any) {
+export async function GET(request: NextRequest) {
   try {
-    const id = parseInt(params.id)
+    const { pathname } = new URL(request.url)
+    // pathname = /api/especialidades/123
+    const idStr = pathname.split('/').pop()
+    const id = Number(idStr)
+    if (isNaN(id)) {
+      return NextResponse.json({ error: 'ID inválido' }, { status: 400 })
+    }
+
     const especialidad = await prisma.especialidad.findUnique({
       where: { codEspec: id },
       include: {
@@ -27,9 +34,15 @@ export async function GET(request: NextRequest, { params }: any) {
   }
 }
 
-export async function PUT(request: NextRequest, { params }: any) {
+export async function PUT(request: NextRequest) {
   try {
-    const id = parseInt(params.id)
+    const { pathname } = new URL(request.url)
+    const idStr = pathname.split('/').pop()
+    const id = Number(idStr)
+    if (isNaN(id)) {
+      return NextResponse.json({ error: 'ID inválido' }, { status: 400 })
+    }
+
     const data = await request.json()
 
     const especialidadActualizada = await prisma.especialidad.update({
@@ -46,9 +59,14 @@ export async function PUT(request: NextRequest, { params }: any) {
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: any) {
+export async function DELETE(request: NextRequest) {
   try {
-    const id = parseInt(params.id)
+    const { pathname } = new URL(request.url)
+    const idStr = pathname.split('/').pop()
+    const id = Number(idStr)
+    if (isNaN(id)) {
+      return NextResponse.json({ error: 'ID inválido' }, { status: 400 })
+    }
 
     const medicamentosAsociados = await prisma.medicamento.findMany({
       where: { codEspec: id },
