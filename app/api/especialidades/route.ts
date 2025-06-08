@@ -5,9 +5,7 @@ import prisma from '@/lib/prisma'
 export async function GET() {
   try {
     const especialidades = await prisma.especialidad.findMany({
-      include: {
-        medicamentos: false // o true si quieres incluir medicamentos
-      }
+      orderBy: { descripcionEsp: 'asc' }
     })
     return NextResponse.json(especialidades)
   } catch (error) {
@@ -27,7 +25,7 @@ export async function POST(request: NextRequest) {
     const nuevaEspecialidad = await prisma.especialidad.create({
       data: {
         descripcionEsp: data.descripcionEsp
-        // otros campos si tienes
+        // agrega más campos aquí si tienes
       }
     })
 
