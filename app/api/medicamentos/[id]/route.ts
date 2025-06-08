@@ -1,15 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 
+// Función auxiliar para extraer el ID de la URL
+function getIdFromUrl(request: NextRequest): number {
+  const url = new URL(request.url)
+  const idStr = url.pathname.split('/').pop() || ''
+  const id = parseInt(idStr)
+  if (isNaN(id)) throw new Error('ID inválido')
+  return id
+}
+
 // GET - Obtener un medicamento por ID
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest) {
   try {
+    const id = getIdFromUrl(request)
+
     const medicamento = await prisma.medicamento.findUnique({
       where: {
-        codMedicamento: parseInt(params.id)
+        codMedicamento: id
       },
       include: {
         laboratorio: true,
@@ -38,16 +46,14 @@ export async function GET(
 }
 
 // PUT - Actualizar un medicamento
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest) {
   try {
+    const id = getIdFromUrl(request)
     const data = await request.json()
-    
+
     const medicamentoActualizado = await prisma.medicamento.update({
       where: {
-        codMedicamento: parseInt(params.id)
+        codMedicamento: id
       },
       data: {
         descripcionMed: data.descripcionMed,
@@ -80,14 +86,13 @@ export async function PUT(
 }
 
 // DELETE - Eliminar un medicamento
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest) {
   try {
+    const id = getIdFromUrl(request)
+
     await prisma.medicamento.delete({
       where: {
-        codMedicamento: parseInt(params.id)
+        codMedicamento: id
       }
     })
 
