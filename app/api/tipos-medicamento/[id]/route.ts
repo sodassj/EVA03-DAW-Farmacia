@@ -1,15 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 
+// Función auxiliar para extraer el ID desde la URL
+function getIdFromUrl(request: NextRequest): number {
+  const url = new URL(request.url)
+  const idStr = url.pathname.split('/').pop() || ''
+  const id = parseInt(idStr)
+  if (isNaN(id)) throw new Error('ID inválido')
+  return id
+}
+
 // GET - Obtener un tipo de medicamento por ID
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest) {
   try {
+    const id = getIdFromUrl(request)
+
     const tipoMedicamento = await prisma.tipoMedicamento.findUnique({
       where: {
-        codTipoMed: parseInt(params.id)
+        codTipoMed: id
       },
       include: {
         medicamentos: {
@@ -39,16 +47,14 @@ export async function GET(
 }
 
 // PUT - Actualizar un tipo de medicamento
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest) {
   try {
+    const id = getIdFromUrl(request)
     const data = await request.json()
-    
+
     const tipoMedicamentoActualizado = await prisma.tipoMedicamento.update({
       where: {
-        codTipoMed: parseInt(params.id)
+        codTipoMed: id
       },
       data: {
         descripcion: data.descripcion
@@ -66,14 +72,13 @@ export async function PUT(
 }
 
 // DELETE - Eliminar un tipo de medicamento
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest) {
   try {
+    const id = getIdFromUrl(request)
+
     // Verificar si hay medicamentos asociados
     const medicamentosAsociados = await prisma.medicamento.findMany({
-      where: { codTipoMed: parseInt(params.id) }
+      where: { codTipoMed: id }
     })
 
     if (medicamentosAsociados.length > 0) {
@@ -85,7 +90,7 @@ export async function DELETE(
 
     await prisma.tipoMedicamento.delete({
       where: {
-        codTipoMed: parseInt(params.id)
+        codTipoMed: id
       }
     })
 
