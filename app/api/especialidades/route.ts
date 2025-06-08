@@ -1,40 +1,71 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 
-// GET - Listar todas las especialidades
-export async function GET() {
+export async function GET(request: NextRequest, { params }: any) {
   try {
-    const especialidades = await prisma.especialidad.findMany({
-      orderBy: { descripcionEsp: 'asc' }
+    const id = parseInt(params.id)
+    const especialidad = await prisma.especialidad.findUnique({
+      where: { codEspec: id },
+      include: {
+        medicamentos: {
+          include: {
+            laboratorio: true,
+            tipoMedicamento: true,
+          },
+        },
+      },
     })
-    return NextResponse.json(especialidades)
+
+    if (!especialidad) {
+      return NextResponse.json({ error: 'Especialidad no encontrada' }, { status: 404 })
+    }
+
+    return NextResponse.json(especialidad)
   } catch (error) {
-    console.error('Error fetching especialidades:', error)
-    return NextResponse.json(
-      { error: 'Error al obtener especialidades' },
-      { status: 500 }
-    )
+    console.error('Error fetching especialidad:', error)
+    return NextResponse.json({ error: 'Error al obtener especialidad' }, { status: 500 })
   }
 }
 
-// POST - Crear una nueva especialidad
-export async function POST(request: NextRequest) {
+export async function PUT(request: NextRequest, { params }: any) {
   try {
+    const id = parseInt(params.id)
     const data = await request.json()
 
-    const nuevaEspecialidad = await prisma.especialidad.create({
+    const especialidadActualizada = await prisma.especialidad.update({
+      where: { codEspec: id },
       data: {
-        descripcionEsp: data.descripcionEsp
-        // agrega más campos aquí si tienes
-      }
+        descripcionEsp: data.descripcionEsp,
+      },
     })
 
-    return NextResponse.json(nuevaEspecialidad, { status: 201 })
+    return NextResponse.json(especialidadActualizada)
   } catch (error) {
-    console.error('Error creating especialidad:', error)
-    return NextResponse.json(
-      { error: 'Error al crear especialidad' },
-      { status: 500 }
-    )
+    console.error('Error updating especialidad:', error)
+    return NextResponse.json({ error: 'Error al actualizar especialidad' }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: NextRequest, { params }: any) {
+  try {
+    const id = parseInt(params.id)
+
+    const medicamentosAsociados = await prisma.medicamento.findMany({
+      where: { codEspec: id },
+    })
+
+    if (medicamentosAsociados.length > 0) {
+      return NextResponse.json(
+        { error: 'No se puede eliminar la especialidad porque tiene medicamentos asociados' },
+        { status: 400 }
+      )
+    }
+
+    await prisma.especialidad.delete({ where: { codEspec: id } })
+
+    return NextResponse.json({ message: 'Especialidad eliminada correctamente' })
+  } catch (error) {
+    console.error('Error deleting especialidad:', error)
+    return NextResponse.json({ error: 'Error al eliminar especialidad' }, { status: 500 })
   }
 }
