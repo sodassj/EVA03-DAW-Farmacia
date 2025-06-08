@@ -1,0 +1,132 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Laboratorio {
+  codLab      Int    @id @default(autoincrement())
+  razonSocial String @db.VarChar(100)
+  direccion   String @db.VarChar(200)
+  telefono    String @db.VarChar(20)
+  email       String @db.VarChar(100)
+  contacto    String @db.VarChar(100)
+
+  // Relaciones
+  medicamentos   Medicamento[]
+  ordenesCompra  OrdenCompra[]
+
+  @@map("laboratorios")
+}
+
+model Especialidad {
+  codEspec       Int    @id @default(autoincrement())
+  descripcionEsp String @db.VarChar(100)
+
+  // Relaciones
+  medicamentos Medicamento[]
+
+  @@map("especialidades")
+}
+
+model TipoMedicamento {
+  codTipoMed   Int    @id @default(autoincrement())
+  descripcion  String @db.VarChar(100)
+
+  // Relaciones
+  medicamentos Medicamento[]
+
+  @@map("tipos_medicamento")
+}
+
+model Medicamento {
+  codMedicamento     Int      @id @default(autoincrement())
+  descripcionMed     String   @db.VarChar(200)
+  fechaFabricacion   DateTime
+  fechaVencimiento   DateTime
+  presentacion       String   @db.VarChar(100)
+  stock              Int
+  precioVentaUni     Decimal  @db.Decimal(10, 2)
+  precioVentaPres    Decimal  @db.Decimal(10, 2)
+  marca              String   @db.VarChar(100)
+  codTipoMed         Int
+  codEspec           Int
+
+  codLab             Int      // clave foránea hacia Laboratorio
+
+  // Relaciones
+  laboratorio        Laboratorio       @relation(fields: [codLab], references: [codLab])
+  tipoMedicamento    TipoMedicamento   @relation(fields: [codTipoMed], references: [codTipoMed])
+  especialidad       Especialidad      @relation(fields: [codEspec], references: [codEspec])
+  detallesOrdenVenta DetalleOrdenVenta[]
+  detallesOrdenCompra DetalleOrdenCompra[]
+
+  @@map("medicamentos")
+}
+
+model OrdenVenta {
+  nroOrdenVta    Int      @id @default(autoincrement())
+  fechaEmision   DateTime
+  motivo         String   @db.VarChar(200)
+  situacion      String   @db.VarChar(50)
+
+  // Relaciones
+  detalles DetalleOrdenVenta[]
+
+  @@map("ordenes_venta")
+}
+
+model DetalleOrdenVenta {
+  id               Int    @id @default(autoincrement())
+  nroOrdenVta      Int
+  codMedicamento   Int
+  descripcionMed   String @db.VarChar(200)
+  cantidadRequerida Int
+  laboratorio      String @db.VarChar(100)
+
+  // Relaciones
+  ordenVenta  OrdenVenta  @relation(fields: [nroOrdenVta], references: [nroOrdenVta])
+  medicamento Medicamento @relation(fields: [codMedicamento], references: [codMedicamento])
+
+  @@map("detalle_orden_venta")
+}
+
+model OrdenCompra {
+  nroOrdenC      Int      @id @default(autoincrement())
+  fechaEmision   DateTime
+  situacion      String   @db.VarChar(50)
+  total          Decimal  @db.Decimal(12, 2)
+  codLab         Int
+  nroFacturaProv String?  @db.VarChar(50)
+
+  // Relaciones
+  laboratorio Laboratorio           @relation(fields: [codLab], references: [codLab])
+  detalles    DetalleOrdenCompra[]
+
+  @@map("ordenes_compra")
+}
+
+model DetalleOrdenCompra {
+  id             Int     @id @default(autoincrement())
+  nroOrdenC      Int
+  codMedicamento Int
+  descripcion    String  @db.VarChar(200)
+  cantidad       Int
+  precio         Decimal @db.Decimal(10, 2)
+  montoUni       Decimal @db.Decimal(10, 2)
+
+  // Relaciones
+  ordenCompra OrdenCompra @relation(fields: [nroOrdenC], references: [nroOrdenC])
+  medicamento Medicamento @relation(fields: [codMedicamento], references: [codMedicamento])
+
+  @@map("detalle_orden_compra")
+}
