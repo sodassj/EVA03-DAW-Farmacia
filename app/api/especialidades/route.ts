@@ -1,6 +1,9 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(req: NextRequest) {
-  return NextResponse.json({ message: 'API funcionando correctamente' })
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const { id } = params;
+  return NextResponse.json({ message: `Especialidad con id ${id}` });
 }
